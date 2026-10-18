@@ -1,7 +1,10 @@
 package esxi
 
 import (
+	"strings"
 	"testing"
+
+	"hostwarden/internal/model"
 )
 
 const sampleVMX = `.encoding = "UTF-8"
@@ -164,5 +167,19 @@ func TestParseSnapshotGet(t *testing.T) {
 func TestDsPathToFS(t *testing.T) {
 	if got := dsPathToFS("[CM6-02] fc/vm.vmx"); got != "/vmfs/volumes/CM6-02/fc/vm.vmx" {
 		t.Errorf("dsPathToFS = %q", got)
+	}
+}
+
+func TestBuildVMXNestedHV(t *testing.T) {
+	req := &model.CreateVMRequest{
+		Name:    "nested",
+		GuestID: "ubuntu64Guest",
+	}
+	if got := buildVMX(req); strings.Contains(got, "vhv.enable") {
+		t.Errorf("vhv.enable written without the option:\n%s", got)
+	}
+	req.NestedHV = true
+	if got := buildVMX(req); !strings.Contains(got, `vhv.enable = "TRUE"`) {
+		t.Errorf("vhv.enable missing:\n%s", got)
 	}
 }

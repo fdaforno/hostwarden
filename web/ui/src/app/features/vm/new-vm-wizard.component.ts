@@ -250,6 +250,12 @@ const GUEST_BY_IMAGE: [RegExp, string][] = [
               <span class="fc-muted">({{ memoryMb | mb }})</span>
             </clr-stack-content>
           </clr-stack-block>
+          <clr-stack-block>
+            <clr-stack-label>Hardware virtualization</clr-stack-label>
+            <clr-stack-content>
+              <label><input type="checkbox" name="nestedHv" [(ngModel)]="nestedHv" /> Expose hardware assisted virtualization to the guest OS</label>
+            </clr-stack-content>
+          </clr-stack-block>
           @if (creationType === 'cloud') {
             <clr-stack-block>
               <clr-stack-label>Hard disk 1</clr-stack-label>
@@ -358,6 +364,8 @@ const GUEST_BY_IMAGE: [RegExp, string][] = [
           <dd>{{ cpu }}</dd>
           <dt>Memory</dt>
           <dd>{{ memoryMb | mb }}</dd>
+          <dt>Hardware virtualization</dt>
+          <dd>{{ nestedHv ? 'Exposed to the guest OS' : 'Not exposed' }}</dd>
           <dt>Hard disk 1</dt>
           <dd>{{ diskGb }} GB, {{ creationType === 'cloud' || thin ? 'Thin Provision' : 'Thick Provision' }}</dd>
           <dt>SCSI controller</dt>
@@ -435,6 +443,7 @@ export class NewVmWizardComponent implements OnInit {
   protected adapter = 'vmxnet3';
   protected iso = '';
   protected powerOn = false;
+  protected nestedHv = false;
   // Cloud image deployment
   protected cloudImage = '';
   protected ciHostname = '';
@@ -593,6 +602,7 @@ export class NewVmWizardComponent implements OnInit {
           adapter_type: this.adapter,
           scsi_controller: this.scsi,
           iso_path: cloud ? '' : this.iso,
+          nested_hv: this.nestedHv,
           power_on: this.powerOn,
           ...(cloud ? { cloud_image: this.cloudImage, cloud_init: this.cloudInit() } : {}),
         }),

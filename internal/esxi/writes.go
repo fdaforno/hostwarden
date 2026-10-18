@@ -290,6 +290,9 @@ func buildVMX(req *model.CreateVMRequest) string {
 	if req.CoresPerSocket > 0 {
 		w("cpuid.coresPerSocket", strconv.Itoa(req.CoresPerSocket))
 	}
+	if req.NestedHV {
+		w("vhv.enable", "TRUE")
+	}
 	// PCI bridges (required: without them power-on fails with msg.pci.noslotavail)
 	for i := 0; i < 2; i++ {
 		w(fmt.Sprintf("pciBridge%d.present", i), "TRUE")

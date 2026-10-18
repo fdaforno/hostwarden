@@ -113,7 +113,7 @@ const POWER_OFF_POLL_MS = 3000;
                 </div>
 
                 <clr-stack-view>
-                  <clr-stack-block [clrSbExpandable]="true">
+                  <clr-stack-block [clrSbExpandable]="true" [clrSbExpanded]="true">
                     <clr-stack-label>CPU</clr-stack-label>
                     <clr-stack-content>
                       <input class="clr-input num" type="number" name="cpu" min="1" max="128" [(ngModel)]="cpu" />
@@ -139,7 +139,7 @@ const POWER_OFF_POLL_MS = 3000;
                     </clr-stack-block>
                   </clr-stack-block>
 
-                  <clr-stack-block [clrSbExpandable]="true">
+                  <clr-stack-block [clrSbExpandable]="true" [clrSbExpanded]="true">
                     <clr-stack-label>Memory</clr-stack-label>
                     <clr-stack-content>
                       <input class="clr-input num" type="number" name="memoryMb" min="64" step="64" [(ngModel)]="memoryMb" /> MB

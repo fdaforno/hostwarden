@@ -356,6 +356,7 @@ type CreateVMRequest struct {
 	VNCEnabled     bool             `json:"vnc_enabled,omitempty"`
 	VNCPort        int              `json:"vnc_port,omitempty"`
 	VNCPassword    string           `json:"vnc_password,omitempty"`
+	NestedHV       bool             `json:"nested_hv,omitempty"`
 	CloudImage     string           `json:"cloud_image,omitempty"` // cloud image vmdk path on datastore (e.g., "cloud-images/rocky-9.vmdk")
 	CloudInit      *CloudInitConfig `json:"cloud_init,omitempty"`
 	PowerOn        bool             `json:"power_on"`

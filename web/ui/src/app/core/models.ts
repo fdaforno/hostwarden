@@ -215,6 +215,8 @@ export interface CreateVmRequest {
   annotation?: string;
   iso_path: string;
   boot_from_cdrom?: boolean;
+  /** Expose hardware assisted virtualization (nested virtualization) to the guest OS. */
+  nested_hv?: boolean;
   power_on: boolean;
   /** Cloud image VMDK on the same datastore ("cloud-images/x.vmdk"): the boot disk is cloned from it. */
   cloud_image?: string;

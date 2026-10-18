@@ -81,6 +81,11 @@ All notable changes to Hostwarden are listed here. Dates are in UTC.
   and registered on the target, a running one is suspended (default) or
   shut down first and resumed or powered on afterwards. The source copy
   is deleted or kept, and thin disks stay thin.
+- **Nested virtualization at creation.** The New Virtual Machine wizard
+  can expose hardware assisted virtualization to the guest operating
+  system (vhv.enable) from the Hardware page; the CPU and memory blocks
+  of the edit dialog are expanded by default so the option is
+  immediately visible there too.
 
 ## 2026-10-07
 

@@ -111,6 +111,7 @@ curl -X POST http://localhost:8080/api/v1/hosts/$HID/vms \
     "num_cpus": 2, "memory_mb": 4096,
     "datastore": "datastore1", "disks": [{"size_gb": 16, "thin": true}],
     "network": "VM Network", "adapter_type": "vmxnet3",
+    "nested_hv": true,
     "power_on": true
   }'
 ```
