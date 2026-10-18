@@ -29,6 +29,8 @@ import {
   MigrateRequest,
   MigrationCheck,
   Network,
+  RelocateCheck,
+  RelocateRequest,
   OIDCConfig,
   PerfData,
   PowerState,
@@ -223,6 +225,13 @@ export class ApiService {
   }
   migrate(hid: string, vmid: string, req: MigrateRequest): Promise<JobStatus> {
     return this.send(this.http.post<JobStatus>(`${this.vmUrl(hid, vmid)}/migrate`, req));
+  }
+  // ---- relocation to another datastore of the same host ----
+  relocateCheck(hid: string, vmid: string, req: RelocateRequest): Promise<RelocateCheck> {
+    return this.send(this.http.post<RelocateCheck>(`${this.vmUrl(hid, vmid)}/relocate/check`, req));
+  }
+  relocate(hid: string, vmid: string, req: RelocateRequest): Promise<JobStatus> {
+    return this.send(this.http.post<JobStatus>(`${this.vmUrl(hid, vmid)}/relocate`, req));
   }
   clone(hid: string, vmid: string, req: CloneRequest): Promise<JobStatus> {
     return this.send(this.http.post<JobStatus>(`${this.vmUrl(hid, vmid)}/clone`, req));

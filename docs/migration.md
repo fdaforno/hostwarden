@@ -23,13 +23,22 @@ In every case the source copy is removed only once the machine is registered on 
 - **Shared datastore.** When the target datastore is the very same volume on both hosts, nothing is copied: the machine is stopped, unregistered on the source, registered and started on the target. On failure it is registered on the source again. Files are never deleted.
 - **Thin disks.** The copy allocates them in full. The option "Keep thin disks thin" makes them thin again with `vmkfstools -K` (skipped when the machine has snapshots).
 
+## Relocation between datastores of the same host
+
+The **Relocate** dialog moves a virtual machine from one datastore to another on the same host. It works like a migration to the same host:
+
+- a powered-off machine is copied to the target datastore and registered there;
+- a running machine is suspended (default) or shut down, copied, and resumed or powered on;
+- the source copy is deleted or kept, and the VM gets a new identity on the host.
+
+The copy is done with `cp -r` on the host, so thin disks stay thin. The "Keep thin disks thin" option runs `vmkfstools -K` afterwards to reclaim unused space.
+
 ## Requirements and limits
 
 - All disks of the machine must be in its own folder.
 - The target host needs a port group with the same name for each network adapter, enough free space, and no folder with the machine's name on the target datastore.
 - The source host must reach the target host on the SSH port.
 - It is not transparent: while the machine is stopped, client connections can time out.
-- A machine cannot be moved between two datastores of the same host.
 
 ## What has been tried
 

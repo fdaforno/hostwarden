@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { ApiService, errorMessage } from './api.service';
 import { DialogService } from './dialog.service';
 import { InventoryService } from './inventory.service';
-import { Backup, BackupRequest, CloneRequest, Host, HostPowerAction, JobStatus, MigrateRequest, Vm, VmPowerAction } from './models';
+import { Backup, BackupRequest, CloneRequest, Host, HostPowerAction, JobStatus, MigrateRequest, RelocateRequest, Vm, VmPowerAction } from './models';
 import { TaskService } from './task.service';
 
 const JOB_POLL_MS = 3000;
@@ -67,6 +67,22 @@ export class ActionsService {
     // Follow the VM to its new host when the user is still looking at the old one.
     if (done && newId && this.router.url.startsWith(`/vm/${vm.host_id}/${vm.id}/`)) {
       void this.router.navigate(['/vm', req.target_host_id, newId]);
+    }
+  }
+
+  /**
+   * Starts a relocation to another datastore of the same host and follows it
+   * in Recent Tasks until it ends.
+   */
+  async relocateVm(vm: Vm, req: RelocateRequest, targetDatastore: string): Promise<void> {
+    let newId = '';
+    const done = await this.track('Relocate virtual machine', `${vm.name} to ${targetDatastore}`, async () => {
+      const job = await this.followJob(await this.api.relocate(vm.host_id, vm.id, req));
+      newId = job.new_vm_id ?? '';
+    });
+    // The VM stays on the same host, but its MoRef changes: follow the new id.
+    if (done && newId && this.router.url.startsWith(`/vm/${vm.host_id}/${vm.id}/`)) {
+      void this.router.navigate(['/vm', vm.host_id, newId]);
     }
   }
 

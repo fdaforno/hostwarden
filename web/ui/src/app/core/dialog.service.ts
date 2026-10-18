@@ -26,6 +26,8 @@ export class DialogService {
   readonly editVm = signal<Vm | null>(null);
   readonly takeSnapshot = signal<Vm | null>(null);
   readonly migrateVm = signal<Vm | null>(null);
+  /** Move a VM to another datastore of the same host. */
+  readonly relocateVm = signal<Vm | null>(null);
   /** `template` = the copy becomes a template. */
   readonly cloneVm = signal<{ vm: Vm; template: boolean } | null>(null);
   readonly changePassword = signal(false);

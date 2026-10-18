@@ -306,6 +306,18 @@ export interface MigrationCheck {
   warnings: string[];
 }
 
+/** Move a VM to another datastore of the same host. */
+export interface RelocateRequest {
+  target_datastore: string;
+  mode?: MigrationMode;
+  delete_source?: boolean;
+  reclaim_thin?: boolean;
+  precopy?: boolean;
+}
+
+/** Relocation checks reuse the migration-check shape. */
+export type RelocateCheck = MigrationCheck;
+
 export interface CloneRequest {
   name: string;
   /** Unset = datastore of the source. */

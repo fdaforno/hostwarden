@@ -117,6 +117,8 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("GET /api/v1/hosts/{hid}/vms/{vmid}/console", s.auth(s.handleVMConsole))
 	mux.HandleFunc("POST /api/v1/hosts/{hid}/vms/{vmid}/migrate/check", s.auth(s.handleMigrateCheck))
 	mux.HandleFunc("POST /api/v1/hosts/{hid}/vms/{vmid}/migrate", s.auth(s.handleMigrate))
+	mux.HandleFunc("POST /api/v1/hosts/{hid}/vms/{vmid}/relocate/check", s.auth(s.handleRelocateCheck))
+	mux.HandleFunc("POST /api/v1/hosts/{hid}/vms/{vmid}/relocate", s.auth(s.handleRelocate))
 	mux.HandleFunc("POST /api/v1/hosts/{hid}/vms/{vmid}/clone", s.auth(s.handleCloneVM))
 	mux.HandleFunc("GET /api/v1/jobs/{id}", s.auth(s.handleJobStatus))
 	mux.HandleFunc("GET /api/v1/tasks", s.auth(s.handleListTasks))

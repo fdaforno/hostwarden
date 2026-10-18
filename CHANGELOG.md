@@ -76,6 +76,11 @@ All notable changes to Hostwarden are listed here. Dates are in UTC.
   `esxcli storage core device smart`, `esxcli nvme device list`,
   `esxcli nvme device log` and `esxcli nvme device namespace` are now
   permitted in the read-only esxcli console.
+- **Relocation between datastores.** A virtual machine can be moved to
+  another datastore of the same host: a powered-off machine is copied
+  and registered on the target, a running one is suspended (default) or
+  shut down first and resumed or powered on afterwards. The source copy
+  is deleted or kept, and thin disks stay thin.
 
 ## 2026-10-07
 

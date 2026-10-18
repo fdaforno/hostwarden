@@ -441,6 +441,15 @@ type MigrateRequest struct {
 	Precopy         bool   `json:"precopy"`       // running VM: snapshot it and copy the disks before stopping it (shorter downtime)
 }
 
+// RelocateRequest moves a VM between two datastores of the same host.
+type RelocateRequest struct {
+	TargetDatastore string `json:"target_datastore"`
+	Mode            string `json:"mode"`          // cold | suspend | stop_start
+	DeleteSource    bool   `json:"delete_source"` // delete the source files once the target runs
+	ReclaimThin     bool   `json:"reclaim_thin"`  // re-thin thin disks after the copy
+	Precopy         bool   `json:"precopy"`       // not implemented yet, kept for API symmetry
+}
+
 // MigrationCheck is the outcome of the compatibility checks for a migration.
 type MigrationCheck struct {
 	PowerState      string   `json:"power_state"`

@@ -96,6 +96,8 @@ Permissions are checked on every mutating request: a user needs `manage_vms` for
 | POST | `/hosts/{hid}/vms/{vmid}/clone` | `{name,datastore?,power_on,template}` → job |
 | POST | `/hosts/{hid}/vms/{vmid}/migrate/check` | `{target_host_id,target_datastore}` → compatibility report (a query) |
 | POST | `/hosts/{hid}/vms/{vmid}/migrate` | as above plus `mode` (`cold`\|`suspend`\|`stop_start`), `delete_source`, `reclaim_thin`, `precopy` → job |
+| POST | `/hosts/{hid}/vms/{vmid}/relocate/check` | `{target_datastore}` → compatibility report (a query) |
+| POST | `/hosts/{hid}/vms/{vmid}/relocate` | as above plus `mode` (`cold`\|`suspend`\|`stop_start`), `delete_source`, `reclaim_thin` → job |
 | GET | `/jobs/{id}` | progress of a long operation |
 | GET | `/tasks` | Recent Tasks |
 

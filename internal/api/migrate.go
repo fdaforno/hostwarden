@@ -88,6 +88,80 @@ func (s *Server) handleMigrate(w http.ResponseWriter, r *http.Request) {
 	}))
 }
 
+func (s *Server) handleRelocateCheck(w http.ResponseWriter, r *http.Request) {
+	c, err := s.client(r)
+	if err != nil {
+		apiError(w, err)
+		return
+	}
+	req := &model.RelocateRequest{}
+	if !decodeBody(w, r, req) {
+		return
+	}
+	if req.TargetDatastore == "" {
+		errJSON(w, http.StatusBadRequest, "target_datastore is required")
+		return
+	}
+	if !vmxValueRE.MatchString(req.TargetDatastore) {
+		errJSON(w, http.StatusBadRequest, "invalid target_datastore")
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 90*time.Second)
+	defer cancel()
+	check, err := c.CheckRelocate(ctx, r.PathValue("vmid"), req.TargetDatastore)
+	if err != nil {
+		apiError(w, err)
+		return
+	}
+	writeJSON(w, 200, check)
+}
+
+func (s *Server) handleRelocate(w http.ResponseWriter, r *http.Request) {
+	c, err := s.client(r)
+	if err != nil {
+		apiError(w, err)
+		return
+	}
+	req := &model.RelocateRequest{}
+	if !decodeBody(w, r, req) {
+		return
+	}
+	if req.TargetDatastore == "" {
+		errJSON(w, http.StatusBadRequest, "target_datastore is required")
+		return
+	}
+	if !vmxValueRE.MatchString(req.TargetDatastore) {
+		errJSON(w, http.StatusBadRequest, "invalid target_datastore")
+		return
+	}
+	switch req.Mode {
+	case model.MigrateCold, model.MigrateSuspend, model.MigrateStopStart:
+	default:
+		errJSON(w, http.StatusBadRequest, "mode must be cold, suspend or stop_start")
+		return
+	}
+	vmid := r.PathValue("vmid")
+	ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
+	vm, err := c.GetVM(ctx, vmid)
+	cancel()
+	if err != nil {
+		apiError(w, err)
+		return
+	}
+
+	hid := r.PathValue("hid")
+	init := model.JobStatus{Kind: "relocate", VMName: vm.Name, SourceHostID: hid, TargetHostID: hid}
+	writeJSON(w, http.StatusAccepted, s.startJob(r, init, func(ctx context.Context, j *job) (jobResult, error) {
+		res, err := c.RelocateVM(ctx, vmid, req, func(phase string, done, total int64) {
+			j.update(func(st *model.JobStatus) { st.Phase, st.BytesDone, st.BytesTotal = phase, done, total })
+		})
+		if err != nil {
+			return jobResult{}, err
+		}
+		return jobResult{NewVMID: res.NewVMID, Warnings: res.Warnings}, nil
+	}))
+}
+
 // handleCloneVM starts a clone of a powered-off VM on its own host.
 func (s *Server) handleCloneVM(w http.ResponseWriter, r *http.Request) {
 	c, err := s.client(r)

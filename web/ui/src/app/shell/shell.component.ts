@@ -10,6 +10,7 @@ import { ProtectVmDialogComponent } from '../features/vm/protect-vm-dialog.compo
 import { CloneVmDialogComponent } from '../features/vm/clone-vm-dialog.component';
 import { EditVmDialogComponent } from '../features/vm/edit-vm-dialog.component';
 import { MigrateVmDialogComponent } from '../features/vm/migrate-vm-dialog.component';
+import { RelocateVmDialogComponent } from '../features/vm/relocate-vm-dialog.component';
 import { NewVmWizardComponent } from '../features/vm/new-vm-wizard.component';
 import { SnapshotDialogComponent } from '../features/vm/snapshot-dialog.component';
 import { ConsoleWindowComponent } from '../features/console/console-window.component';
@@ -36,6 +37,7 @@ import { RecentTasksComponent } from './recent-tasks.component';
     CloneVmDialogComponent,
     ProtectVmDialogComponent,
     MigrateVmDialogComponent,
+    RelocateVmDialogComponent,
     SnapshotDialogComponent,
     IsoDownloadDialogComponent,
     ConsoleWindowComponent,
@@ -120,6 +122,9 @@ import { RecentTasksComponent } from './recent-tasks.component';
     }
     @if (dialogs.migrateVm(); as vm) {
       <app-migrate-vm-dialog [vm]="vm" />
+    }
+    @if (dialogs.relocateVm(); as vm) {
+      <app-relocate-vm-dialog [vm]="vm" />
     }
     @if (dialogs.takeSnapshot(); as vm) {
       <app-snapshot-dialog [vm]="vm" />

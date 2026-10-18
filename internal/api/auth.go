@@ -88,7 +88,7 @@ func (s *Server) changesSomething(r *http.Request) bool {
 	case http.MethodGet, http.MethodHead, http.MethodOptions:
 		return false
 	}
-	return !(strings.HasPrefix(p, "/api/v1/auth/") || strings.HasSuffix(p, "/esxcli") || strings.HasSuffix(p, "/migrate/check"))
+	return !(strings.HasPrefix(p, "/api/v1/auth/") || strings.HasSuffix(p, "/esxcli") || strings.HasSuffix(p, "/migrate/check") || strings.HasSuffix(p, "/relocate/check"))
 }
 
 // permissionFor returns the permission function required for the request,

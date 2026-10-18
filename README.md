@@ -45,6 +45,7 @@ Hostwarden fills that gap for home labs and test environments. It reads the inve
 - **Create** virtual machines with a guided wizard: guest OS, CPU, memory, disks, network, SCSI controller, boot ISO.
 - **Deploy from cloud images**: clone a ready-made image (Rocky Linux, Ubuntu, Fedora, Debian: downloadable from a built-in catalog) and let cloud-init set the host name, users, SSH keys and packages on first boot. A new Linux server is ready in about a minute.
 - **Edit** everything afterwards: CPU and cores per socket, memory, disks (add, grow, remove, also on other datastores), network adapters, CD/DVD drives, USB controller, firmware (BIOS/EFI), boot delay, CPU and memory hot add, nested virtualization, notes. Hostwarden offers to power the machine off and back on for you when the change requires it.
+- **Relocate** a virtual machine to another datastore of the same host.
 - **Power** operations: power on and off, reset, suspend, guest shutdown and restart.
 - **Web console**: the screen, keyboard and mouse of the machine in your browser, in a floating window you can move and resize while you keep working, or in a tab of its own. Nothing to install, and the browser never needs to reach the host directly.
 - **Snapshots**: take, revert, delete, delete all.
@@ -162,7 +163,6 @@ Hostwarden works within what a standalone ESXi host can do:
 - Disks can grow but not shrink, and not while the machine has snapshots.
 - Migration of a running machine is not live: there is a short stop while the machine is suspended or restarted. Hostwarden does not do live migration.
 - There are no clusters: no high availability, no automatic load balancing, no distributed switches.
-- A machine cannot be moved between two datastores of the same host yet.
 
 ## Project layout
 

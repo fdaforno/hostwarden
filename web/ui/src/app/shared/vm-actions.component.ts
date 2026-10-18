@@ -64,6 +64,7 @@ import { ActionsService, DialogService, Vm } from '../core';
           </clr-dropdown>
         }
         <button clrDropdownItem (click)="dialogs.migrateVm.set(vm())">Migrate...</button>
+        <button clrDropdownItem (click)="dialogs.relocateVm.set(vm())">Relocate...</button>
         <button clrDropdownItem (click)="dialogs.editVm.set(vm())">Edit Settings...</button>
         <div class="dropdown-divider" role="separator"></div>
         <button clrDropdownItem (click)="actions.deleteVm(vm())">Delete from Disk</button>
