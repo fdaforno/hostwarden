@@ -42,6 +42,24 @@ docker build -t hostwarden .
 
 Creating virtual machines with cloud-init needs `genisoimage` on the machine running the server. The Docker image includes it.
 
+VM creation queries the target host's configuration descriptors and requires both
+creation and power-on support. If `vmx-21` is supported, Hostwarden preserves the
+upstream hardware version and `pciRootBridge` layout, even when the host's default
+is newer. Otherwise it prefers the host default when it is one of `vmx-13`,
+`vmx-14`, `vmx-15`, `vmx-17`, `vmx-18`, `vmx-19`, and `vmx-20`, paired with the
+legacy PCI bridge and PCIe root ports. If no known default is available, it selects
+the highest supported profile in that set. Direct ESXi connections query the selected
+key in the single-host environment browser; vCenter queries also name the target host.
+The returned version must match; guest OS choices use that same configuration. Unknown profiles,
+failed queries, and mismatched responses stop creation before any datastore
+commands. Existing VMs are not converted.
+
+Compatibility tests exercise the real creation path against SOAP and SSH
+simulators, compare the modern VMX to a captured upstream baseline, and verify
+older bridge layouts and failure handling. These tests do not certify guest
+bootability on every ESXi release; actual power-on and guest device checks still
+require the corresponding ESXi host.
+
 ## Configuration
 
 | Variable | Default | Meaning |

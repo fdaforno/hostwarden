@@ -118,6 +118,8 @@ curl -X POST http://localhost:8080/api/v1/hosts/$HID/vms \
 
 With `"cloud_image": "cloud-images/rocky-9.vmdk"` the boot disk is cloned from that image, and an optional `cloud_init` object (`hostname`, `users`, `ssh_authorized_keys`, `packages`, `runcmd`, `write_files`, `network_config`, or a raw `user_data`) configures the guest on first boot.
 
+VM hardware and PCI bridge compatibility are selected automatically from the target host's capabilities. Hosts that support creating and powering on `vmx-21` retain the upstream configuration. Older supported profiles use a matching legacy bridge layout. Capability errors stop creation before datastore writes; no compatibility field is required in the request.
+
 Fields of `PUT /hosts/{hid}/vms/{vmid}`. All are optional and only what is present is applied; the machine must be powered off.
 
 | Field | Meaning |

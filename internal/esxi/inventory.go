@@ -70,26 +70,7 @@ func (c *Client) GuestOSList(ctx context.Context) ([]model.GuestOS, error) {
 	if err := c.Ensure(ctx); err != nil {
 		return nil, err
 	}
-	hsRef, err := c.hostSystemRef(ctx)
-	if err != nil {
-		return nil, err
-	}
-	var hs mo.HostSystem
-	if err := c.pc.RetrieveOne(ctx, hsRef, []string{"parent"}, &hs); err != nil {
-		return nil, err
-	}
-	if hs.Parent == nil {
-		return nil, fmt.Errorf("host has no parent compute resource")
-	}
-	var cr mo.ComputeResource
-	if err := c.pc.RetrieveOne(ctx, *hs.Parent, []string{"environmentBrowser"}, &cr); err != nil {
-		return nil, err
-	}
-	if cr.EnvironmentBrowser == nil {
-		return nil, fmt.Errorf("environment browser not available")
-	}
-	browser := object.NewEnvironmentBrowser(c.vc, *cr.EnvironmentBrowser)
-	opt, err := browser.QueryConfigOption(ctx, &types.EnvironmentBrowserConfigOptionQuerySpec{})
+	_, opt, err := c.creationConfig(ctx)
 	if err != nil {
 		return nil, err
 	}
