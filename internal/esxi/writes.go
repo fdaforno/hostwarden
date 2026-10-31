@@ -166,6 +166,11 @@ func (c *Client) CreateVM(ctx context.Context, req *model.CreateVMRequest) (*mod
 	if len(req.Disks) == 0 {
 		req.Disks = []model.DiskSpec{{SizeGB: 16, Thin: true}}
 	}
+	releaseMAC, err := c.prepareGuestNetwork(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("guest network: %w", err)
+	}
+	defer releaseMAC()
 
 	dir := fmt.Sprintf("/vmfs/volumes/%s/%s", req.Datastore, req.Name)
 	vmxPath := dir + "/" + req.Name + ".vmx"
@@ -317,7 +322,12 @@ func buildVMX(req *model.CreateVMRequest) string {
 		w("ethernet0.present", "TRUE")
 		w("ethernet0.virtualDev", req.AdapterType)
 		w("ethernet0.networkName", req.Network)
-		w("ethernet0.addressType", "generated")
+		if req.NetworkMAC != "" {
+			w("ethernet0.addressType", "static")
+			w("ethernet0.address", req.NetworkMAC)
+		} else {
+			w("ethernet0.addressType", "generated")
+		}
 	}
 	if req.ISOPath != "" {
 		w("ide1:0.present", "TRUE")

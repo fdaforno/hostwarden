@@ -37,6 +37,7 @@ make ui-dev       # optional: web console with hot reload on :4200, /api forward
 make build        # server binary with the web console embedded
 make vet test     # go vet and tests
 make ui-lint      # lint of the web console
+(cd web/ui && npm run test:network)  # guest IPv4 validation and automatic NIC settings (Node.js 22.6+)
 docker build -t hostwarden .
 ```
 
