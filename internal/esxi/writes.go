@@ -157,6 +157,10 @@ func (c *Client) CreateVM(ctx context.Context, req *model.CreateVMRequest) (*mod
 	if c.ssh == nil {
 		return nil, ErrSSHDisabled
 	}
+	profile, _, err := c.creationConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("VM compatibility: %w", err)
+	}
 	if req.AdapterType == "" {
 		req.AdapterType = "e1000"
 	}
@@ -231,7 +235,7 @@ func (c *Client) CreateVM(ctx context.Context, req *model.CreateVMRequest) (*mod
 		}
 	}
 
-	vmx := buildVMX(req)
+	vmx := buildVMX(req, profile)
 	cmd := fmt.Sprintf("cat > %s <<'FCVMXEOF'\n%sFCVMXEOF\n", shq(vmxPath), vmx)
 	if out, err := c.sshRun(ctx, cmd); err != nil {
 		return nil, fmt.Errorf("write vmx: %w (output: %s)", err, out)
@@ -277,12 +281,12 @@ func (c *Client) CreateVM(ctx context.Context, req *model.CreateVMRequest) (*mod
 	return vm, nil
 }
 
-func buildVMX(req *model.CreateVMRequest) string {
+func buildVMX(req *model.CreateVMRequest, profile vmCreationProfile) string {
 	var b strings.Builder
 	w := func(k, v string) { fmt.Fprintf(&b, "%s = \"%s\"\n", k, v) }
 	b.WriteString(".encoding = \"UTF-8\"\n")
 	w("config.version", "8")
-	w("virtualHW.version", "21")
+	w("virtualHW.version", strconv.Itoa(int(profile)))
 	w("displayName", req.Name)
 	w("guestOS", guestOSToVMX(req.GuestID))
 	w("memSize", strconv.FormatInt(req.MemoryMB, 10))
@@ -293,11 +297,21 @@ func buildVMX(req *model.CreateVMRequest) string {
 	if req.NestedHV {
 		w("vhv.enable", "TRUE")
 	}
-	// PCI bridges (required: without them power-on fails with msg.pci.noslotavail)
-	for i := 0; i < 2; i++ {
-		w(fmt.Sprintf("pciBridge%d.present", i), "TRUE")
-		w(fmt.Sprintf("pciBridge%d.virtualDev", i), "pciRootBridge")
-		w(fmt.Sprintf("pciBridge%d.functions", i), "1")
+	if profile == upstreamVMProfile {
+		// Keep the upstream bridge layout unchanged for vmx-21.
+		for i := 0; i < 2; i++ {
+			w(fmt.Sprintf("pciBridge%d.present", i), "TRUE")
+			w(fmt.Sprintf("pciBridge%d.virtualDev", i), "pciRootBridge")
+			w(fmt.Sprintf("pciBridge%d.functions", i), "1")
+		}
+	} else {
+		// Older ESXi profiles require the legacy PCI bridge and PCIe root ports.
+		w("pciBridge0.present", "TRUE")
+		for i := 4; i <= 7; i++ {
+			w(fmt.Sprintf("pciBridge%d.present", i), "TRUE")
+			w(fmt.Sprintf("pciBridge%d.virtualDev", i), "pcieRootPort")
+			w(fmt.Sprintf("pciBridge%d.functions", i), "8")
+		}
 	}
 	if req.CloudImage != "" {
 		w("firmware", "efi")

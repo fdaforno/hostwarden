@@ -175,11 +175,11 @@ func TestBuildVMXNestedHV(t *testing.T) {
 		Name:    "nested",
 		GuestID: "ubuntu64Guest",
 	}
-	if got := buildVMX(req); strings.Contains(got, "vhv.enable") {
+	if got := buildVMX(req, upstreamVMProfile); strings.Contains(got, "vhv.enable") {
 		t.Errorf("vhv.enable written without the option:\n%s", got)
 	}
 	req.NestedHV = true
-	if got := buildVMX(req); !strings.Contains(got, `vhv.enable = "TRUE"`) {
+	if got := buildVMX(req, upstreamVMProfile); !strings.Contains(got, `vhv.enable = "TRUE"`) {
 		t.Errorf("vhv.enable missing:\n%s", got)
 	}
 }
