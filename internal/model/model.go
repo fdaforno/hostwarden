@@ -312,16 +312,24 @@ type DiskResize struct {
 	SizeGB int64 `json:"size_gb"`
 }
 
+// CloudInitNetwork configures the new VM's primary NIC without an OS interface name.
+type CloudInitNetwork struct {
+	Address    string   `json:"address"` // IPv4 CIDR
+	Gateway    string   `json:"gateway,omitempty"`
+	DNSServers []string `json:"dns_servers,omitempty"`
+}
+
 type CloudInitConfig struct {
-	Hostname          string          `json:"hostname,omitempty"`
-	RootPassword      string          `json:"root_password,omitempty"`
-	SSHAuthorizedKeys []string        `json:"ssh_authorized_keys,omitempty"`
-	Users             []CloudInitUser `json:"users,omitempty"`
-	Packages          []string        `json:"packages,omitempty"`
-	RunCmd            []string        `json:"runcmd,omitempty"`
-	WriteFiles        []CloudInitFile `json:"write_files,omitempty"`
-	NetworkConfig     string          `json:"network_config,omitempty"`
-	UserData          string          `json:"user_data,omitempty"` // raw user-data, overrides all above
+	Network           *CloudInitNetwork `json:"network,omitempty"`
+	Hostname          string            `json:"hostname,omitempty"`
+	RootPassword      string            `json:"root_password,omitempty"`
+	SSHAuthorizedKeys []string          `json:"ssh_authorized_keys,omitempty"`
+	Users             []CloudInitUser   `json:"users,omitempty"`
+	Packages          []string          `json:"packages,omitempty"`
+	RunCmd            []string          `json:"runcmd,omitempty"`
+	WriteFiles        []CloudInitFile   `json:"write_files,omitempty"`
+	NetworkConfig     string            `json:"network_config,omitempty"`
+	UserData          string            `json:"user_data,omitempty"` // overrides generated user-data, not networking or metadata
 }
 
 type CloudInitUser struct {
@@ -340,6 +348,7 @@ type CloudInitFile struct {
 }
 
 type CreateVMRequest struct {
+	NetworkMAC     string           `json:"-"` // internally allocated for cloud-init NIC matching
 	Name           string           `json:"name"`
 	GuestID        string           `json:"guest_id"`
 	NumCPUs        int              `json:"num_cpus"`

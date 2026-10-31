@@ -19,6 +19,7 @@ import {
   TaskService,
   errorMessage,
 } from '../../core';
+import { GuestNetworkSettings, buildGuestNetworkConfig, guestNetworkError } from './guest-network';
 
 type CreationType = 'new' | 'cloud';
 
@@ -65,7 +66,7 @@ const GUEST_BY_IMAGE: [RegExp, string][] = [
           @if (creationType === 'new') {
             An empty virtual machine: you choose the hardware and install the guest operating system yourself, for example from an ISO image.
           } @else {
-            The boot disk is cloned from a ready-made cloud image and the guest is configured on first boot with cloud-init (host name, user, SSH keys, packages).
+            The boot disk is cloned from a ready-made cloud image and the guest is configured on first boot with cloud-init (host name, user, SSH keys, packages, network settings).
           }
         </p>
       </clr-wizard-page>
@@ -229,13 +230,51 @@ const GUEST_BY_IMAGE: [RegExp, string][] = [
             <clr-textarea-container>
               <label>Custom user-data</label>
               <textarea clrTextarea name="ciUserData" rows="4" cols="60" placeholder="#cloud-config ..." [(ngModel)]="ciUserData"></textarea>
-              <clr-control-helper>Optional: when filled in, it replaces all the fields above</clr-control-helper>
+              <clr-control-helper>Optional: replaces the account, SSH key and package settings above. Guest network settings still apply.</clr-control-helper>
             </clr-textarea-container>
           </form>
+          <h5>Guest network</h5>
+          <form clrForm clrLayout="horizontal">
+            <clr-select-container>
+              <label>IPv4 configuration</label>
+              <select clrSelect name="ciNetworkMode" [(ngModel)]="ciNetwork.mode">
+                <option value="dhcp">Automatic (DHCP)</option>
+                <option value="static">Static IPv4</option>
+              </select>
+              <clr-control-helper>Applied on first boot, including when custom user-data is supplied.</clr-control-helper>
+            </clr-select-container>
+            @if (ciNetwork.mode === 'static') {
+              <p>The network adapter is selected automatically. No guest interface name is needed.</p>
+              <clr-input-container>
+                <label>IPv4 address</label>
+                <input clrInput name="ciAddress" [(ngModel)]="ciNetwork.address" placeholder="192.168.1.100" required />
+              </clr-input-container>
+              <clr-input-container>
+                <label>Subnet mask / prefix</label>
+                <input clrInput name="ciSubnet" [(ngModel)]="ciNetwork.subnet" placeholder="255.255.255.0 or /24" required />
+                <clr-control-helper>Accepts a subnet mask or CIDR prefix, for example 255.255.255.0, 24 or /24.</clr-control-helper>
+              </clr-input-container>
+              <clr-input-container>
+                <label>Default gateway</label>
+                <input clrInput name="ciGateway" [(ngModel)]="ciNetwork.gateway" placeholder="192.168.1.1" />
+                <clr-control-helper>Optional for an isolated network.</clr-control-helper>
+              </clr-input-container>
+              <clr-input-container>
+                <label>DNS servers (IPv4)</label>
+                <input clrInput name="ciDns" [(ngModel)]="ciNetwork.dns" size="40" placeholder="192.168.1.1, 1.1.1.1" />
+                <clr-control-helper>Comma or space separated. Leave empty only if DNS is configured in the image or is not needed.</clr-control-helper>
+              </clr-input-container>
+            }
+          </form>
+          @if (networkError(); as error) {
+            <clr-alert clrAlertType="danger" [clrAlertClosable]="false">
+              <clr-alert-item><span class="alert-text">{{ error }}</span></clr-alert-item>
+            </clr-alert>
+          }
         </clr-wizard-page>
       }
 
-      <clr-wizard-page [clrWizardPageNextDisabled]="!(cpu > 0 && memoryMb > 0 && diskGb > 0)">
+      <clr-wizard-page [clrWizardPageNextDisabled]="!(cpu > 0 && memoryMb > 0 && diskGb > 0) || missingStaticNetwork()">
         <ng-template clrPageTitle>Hardware</ng-template>
         <p>Set the CPU, memory, disks and devices of the virtual machine</p>
         <clr-stack-view>
@@ -335,9 +374,14 @@ const GUEST_BY_IMAGE: [RegExp, string][] = [
             </clr-stack-block>
           }
         </clr-stack-view>
+        @if (missingStaticNetwork()) {
+          <clr-alert clrAlertType="danger" [clrAlertClosable]="false">
+            <clr-alert-item><span class="alert-text">Select a network for the adapter to use the guest's static IPv4 settings.</span></clr-alert-item>
+          </clr-alert>
+        }
       </clr-wizard-page>
 
-      <clr-wizard-page [clrWizardPagePreventDefaultNext]="true" (clrWizardPageOnCommit)="create()" [clrWizardPageNextDisabled]="busy()">
+      <clr-wizard-page [clrWizardPagePreventDefaultNext]="true" (clrWizardPageOnCommit)="create()" [clrWizardPageNextDisabled]="busy() || missingStaticNetwork() || (creationType === 'cloud' && !cloudInitValid())">
         <ng-template clrPageTitle>Review and create</ng-template>
         <p>Check the summary, then choose Finish to create the virtual machine.</p>
         @if (createError()) {
@@ -372,6 +416,22 @@ const GUEST_BY_IMAGE: [RegExp, string][] = [
           <dd>{{ scsi }}</dd>
           <dt>Network</dt>
           <dd>{{ network ? network + ' (' + adapter + ')' : 'None' }}</dd>
+          @if (creationType === 'cloud' && network) {
+            <dt>Guest IPv4 configuration</dt>
+            <dd>{{ ciNetwork.mode === 'dhcp' ? 'Automatic (DHCP)' : 'Static IPv4' }}</dd>
+            @if (ciNetwork.mode === 'static') {
+              <dt>Guest interface</dt>
+              <dd>Automatic (primary network adapter)</dd>
+              <dt>IPv4 address</dt>
+              <dd>{{ ciNetwork.address.trim() }}</dd>
+              <dt>Subnet mask / prefix</dt>
+              <dd>{{ ciNetwork.subnet.trim() }}</dd>
+              <dt>Default gateway</dt>
+              <dd>{{ ciNetwork.gateway.trim() || 'None' }}</dd>
+              <dt>DNS servers (IPv4)</dt>
+              <dd>{{ ciNetwork.dns.trim() || 'Not specified' }}</dd>
+            }
+          }
           @if (creationType === 'new') {
             <dt>CD/DVD drive 1</dt>
             <dd>{{ iso || 'No media' }}</dd>
@@ -452,6 +512,13 @@ export class NewVmWizardComponent implements OnInit {
   protected ciKeys = '';
   protected ciPackages = '';
   protected ciUserData = '';
+  protected ciNetwork: GuestNetworkSettings = {
+    mode: 'dhcp',
+    address: '',
+    subnet: '24',
+    gateway: '',
+    dns: '',
+  };
 
   ngOnInit(): void {
     const preset = this.hostId() ?? (this.hosts().length === 1 ? this.hosts()[0].id : '');
@@ -552,13 +619,24 @@ export class NewVmWizardComponent implements OnInit {
   }
 
   protected cloudInitValid(): boolean {
+    if (this.networkError()) return false;
     if (this.ciUserData.trim()) return true;
     return !!this.ciUser.trim() && (!!this.ciPassword || !!this.ciKeys.trim());
   }
 
+  protected networkError(): string | null {
+    return guestNetworkError(this.ciNetwork);
+  }
+
+  protected missingStaticNetwork(): boolean {
+    return this.creationType === 'cloud' && this.ciNetwork.mode === 'static' && !this.network;
+  }
+
   private cloudInit(): CloudInitConfig {
     const hostname = this.ciHostname.trim() || this.name.trim();
-    if (this.ciUserData.trim()) return { hostname, user_data: this.ciUserData };
+    const networkConfig = buildGuestNetworkConfig(this.ciNetwork);
+    const config: CloudInitConfig = { hostname, ...(networkConfig ? { network: networkConfig } : {}) };
+    if (this.ciUserData.trim()) return { ...config, user_data: this.ciUserData };
     const keys = this.ciKeys
       .split('\n')
       .map((k) => k.trim())
@@ -568,7 +646,7 @@ export class NewVmWizardComponent implements OnInit {
       .map((p) => p.trim())
       .filter(Boolean);
     return {
-      hostname,
+      ...config,
       users: [
         {
           name: this.ciUser.trim(),
@@ -588,6 +666,13 @@ export class NewVmWizardComponent implements OnInit {
     const name = this.name.trim();
     const cloud = this.creationType === 'cloud';
     this.createError.set('');
+    if (cloud && (!this.cloudInitValid() || this.missingStaticNetwork())) {
+      const error = this.networkError() || (this.missingStaticNetwork()
+        ? 'Select a network for the static IPv4 configuration.'
+        : 'Enter a user name and a password or SSH key, or supply custom user-data.');
+      this.createError.set(error);
+      return;
+    }
     this.busy.set(true);
     try {
       const vm = await this.tasks.run(cloud ? 'Deploy virtual machine from cloud image' : 'Create virtual machine', name, () =>

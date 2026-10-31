@@ -118,6 +118,11 @@ curl -X POST http://localhost:8080/api/v1/hosts/$HID/vms \
 
 With `"cloud_image": "cloud-images/rocky-9.vmdk"` the boot disk is cloned from that image, and an optional `cloud_init` object (`hostname`, `users`, `ssh_authorized_keys`, `packages`, `runcmd`, `write_files`, `network_config`, or a raw `user_data`) configures the guest on first boot.
 
+The cloud-image wizard's **Guest setup → Guest network** section defaults to DHCP. For static IPv4, enter the address and subnet mask or CIDR prefix (`255.255.255.0`, `24` or `/24`); gateway and IPv4 DNS servers are optional. Select a network adapter on the Hardware page. No guest interface name is required: Hostwarden assigns the primary NIC a MAC from VMware's manual range before registration and uses `match.macaddress` in the NoCloud v2 seed. It checks existing NICs on the target ESXi host and reserves pending addresses during concurrent creates. The settings apply on the new guest's first boot, including when raw `user_data` is supplied. Switching back to DHCP omits static networking and preserves cloud-init's default behavior.
+
+API callers can use `"cloud_init": {"network": {"address": "192.168.1.100/24", "gateway": "192.168.1.1", "dns_servers": ["1.1.1.1"]}}` for automatic NIC matching. `gateway` and `dns_servers` are optional. This requires a `cloud_image` and a `network` port group. The existing raw `cloud_init.network_config` YAML string remains supported for advanced configurations; it cannot be combined with `cloud_init.network`. Custom `user_data` replaces only generated user-data, not the separate network configuration or metadata.
+
+
 Fields of `PUT /hosts/{hid}/vms/{vmid}`. All are optional and only what is present is applied; the machine must be powered off.
 
 | Field | Meaning |
